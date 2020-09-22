@@ -1,0 +1,53 @@
+{% extends "auctions/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div id="id_post_time" style="display:none">{{ listing.post_time|date:"c" }}</div>
+<div id="id_expire_time" style="display:none">{{ listing.expire_time|date:"c" }}</div>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="#">All Categories</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ listing.category }}</li>
+  </ol>
+</nav>
+<div class="card">
+    <div class="row no-gutters">
+        <div class="col-4">
+          <img src="{{ listing.image_url }}" class="card-img" alt="Image not found" onerror="this.onerror=null; this.src='{{ image_placeholder_url }}';">
+        </div>
+        <div class="col-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ listing.title }}</h5>
+                <small class="card-subtitle mb-2 text-muted">
+                    <span>posted by <a href="#">{{ listing.user }}</a></span>
+                    <span id="id_post_time_diff"></span>
+                    <span class="badge badge-secondary">{{ listing.status }}</span>
+                </small>
+                <p class="card-text">
+                    {{ listing.description }}
+                </p>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card-body">
+                <p class="card-text">Current bid: ${{ listing.starting_bid }}</p>
+                {% if is_owner %}
+                    <button type="button" class="btn btn-outline-primary">Close Listing</button>
+                {% else %}
+                    <form class="form-inline">
+                        <div class="form-group mb-2">
+                            ${{ form.value }}
+                            <button type="button" class="btn btn-outline-primary mx-1">Bid</button>
+                        </div>
+                    </form>
+                    <button type="button" class="btn btn-outline-primary mx-2">Add to Watchlist</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{% static 'auctions/auctions.js' %}"></script>
+{% endblock %}
