@@ -3,7 +3,7 @@ from . import models
 
 
 class ListingForm(forms.ModelForm):
-    def validate_and_save(self, user):
+    def save_user(self, user):
         listing = self.save(commit=False)
         listing.user = user
         listing.save()
@@ -22,9 +22,16 @@ class ListingForm(forms.ModelForm):
 
 
 class BiddingForm(forms.ModelForm):
+    def save_user_listing(self, user, listing):
+        bid = self.save(commit=False)
+        bid.user = user
+        bid.listing = listing
+        bid.save()
+        return bid
+
     class Meta:
         model = models.Bid
         fields = ["value"]
         widgets = {
-            "value": forms.NumberInput(attrs={"class": "form-control"})
+            "value": forms.NumberInput(attrs={"class": "form-control", "step": 1.00})
         }

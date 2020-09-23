@@ -16,4 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
         diff_str = "just now";
     }
     document.querySelector("#id_post_time_diff").innerHTML = diff_str;
+
+    document.querySelector("#id_bid_button").onclick = () => {
+        if (document.querySelector("#id_value").value == "") {
+            return false;
+        } else {
+            document.querySelector("#id_bid_watch_form").submit();
+        }
+    }
+    document.querySelector("#id_watch_button").onclick = () => {
+        document.querySelector("#id_value").value = "";
+        document.querySelector("#id_bid_watch_form").submit();
+    }
 });

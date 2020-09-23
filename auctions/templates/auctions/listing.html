@@ -28,19 +28,31 @@
                 </p>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-4">
             <div class="card-body">
-                <p class="card-text">Current bid: ${{ listing.starting_bid }}</p>
-                {% if is_owner %}
+                {% if listing.high_bid.0 %}
+                    <p class="card-text">Highest bid: ${{ listing.high_bid.0.value }} by {{ listing.high_bid.0.user }}</p>
+                {% else %}
+                    <p class="card-text">Starting bid: ${{ listing.starting_bid }}</p>
+                {% endif %}
+
+                {% if listing.is_owner %}
                     <button type="button" class="btn btn-outline-primary">Close Listing</button>
                 {% else %}
-                    <form class="form-inline">
-                        <div class="form-group mb-2">
-                            ${{ form.value }}
-                            <button type="button" class="btn btn-outline-primary mx-1">Bid</button>
-                        </div>
+                    <form class="form-inline" id="id_bid_watch_form" action="{% url 'listing' listing.id %}" method="post">
+                    <div class="form-group mb-2">
+                        {% csrf_token %}
+                        ${{ form.value }}
+                    <button type="button" class="btn btn-outline-primary mx-1" id="id_bid_button">Bid</button>
+                    </div>
                     </form>
-                    <button type="button" class="btn btn-outline-primary mx-2">Add to Watchlist</button>
+                    <button type="button" class="btn btn-outline-primary mx-2" id="id_watch_button">
+                    {% if listing.watch.0.user == request.user %}
+                        Remove from Watchlist
+                    {% else %}
+                        Add to Watchlist
+                    {% endif %}
+                    </button>
                 {% endif %}
             </div>
         </div>

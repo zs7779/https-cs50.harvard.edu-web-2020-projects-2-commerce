@@ -42,7 +42,7 @@ class Bid(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="bids")
     listing = models.ForeignKey("Listing", on_delete=models.SET_NULL, null=True, related_name="bids")
     post_time = models.fields.DateTimeField(auto_now_add=True)
-    value = models.fields.DecimalField(max_digits=9, decimal_places=2)
+    value = models.fields.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=None)
     success = models.fields.BooleanField(default=False)
 
 

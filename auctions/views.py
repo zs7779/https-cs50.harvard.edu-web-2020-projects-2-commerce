@@ -19,10 +19,19 @@ def index(request):
 
 @login_required
 def listing(request, listing_id):
+    item = models.Listing.objects.get(id=listing_id)
+    watches = models.Bid.objects.filter(listing=item)
+    high_bid = watches.exclude(value=None).order_by("-value")[:1]
+    my_bid = watches.exclude(value=None, user=request.user).order_by("-value")[:1]
+    my_watch = watches.filter(value=None, user=request.user)[:1]
     if request.method == "GET":
-        item = models.Listing.objects.get(id=listing_id)
+        if len(my_bid) != 0:
+            form = forms.BiddingForm(instance=my_bid[0])
+        else:
+            form = forms.BiddingForm()
         return render(request, "auctions/listing.html", {
             "listing": {
+                "id": listing_id,
                 "user": item.user,
                 "title": item.title,
                 "description": item.description,
@@ -31,14 +40,22 @@ def listing(request, listing_id):
                 "post_time": item.post_time,
                 "expire_time": item.expire_time,
                 "starting_bid": item.starting_bid,
-                "status": item.get_status_display()
+                "high_bid": high_bid,
+                "watch": my_watch,
+                "status": item.get_status_display(),
+                "is_owner": request.user.id == item.user.id,
             },
-            "is_owner": request.user.id == item.user.id,
-            "form": forms.BiddingForm(),
+            "form": form,
             "image_placeholder_url": staticfiles_storage.url('auctions/image-placeholder.jpg')
         })
     elif request.method == "POST":
-        pass
+        form = forms.BiddingForm(request.POST)
+        if form.is_valid():
+            if form.cleaned_data["value"] is None and len(my_watch) != 0:
+                my_watch[0].delete()
+            elif form.cleaned_data["value"] is None or len(high_bid) == 0 or form.cleaned_data["value"] > high_bid[0].value:
+                form = form.save_user_listing(request.user, item)
+            return redirect("listing", listing_id=listing_id)
 
 
 @login_required
@@ -51,7 +68,7 @@ def new_listing(request):
     elif request.method == "POST":
         form = forms.ListingForm(request.POST)
         if form.is_valid():
-            form = form.validate_and_save(request.user)
+            form = form.save_user(request.user)
             return redirect("listing", id=form.id)
         else:
             return render(request, "auctions/new_listing.html", {
