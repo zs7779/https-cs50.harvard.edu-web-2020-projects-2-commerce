@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -11,15 +11,26 @@ from . import models, forms
 
 
 @login_required
-def index(request):
+def index(request, category=""):
+    category = request.GET["category"] if "category" in request.GET else ""
+    items = models.Listing.objects.all()
+    if category != 0:
+        items = items.filter()
+    watches = models.Bid.objects.filter(value=None, user=request.user)
     return render(request, "auctions/index.html", {
-        "listings": models.Listing.objects.all()
+        "category": category,
+        "listings": items,
+        "watches": watches
     })
 
 
 @login_required
 def listing(request, listing_id):
-    item = models.Listing.objects.get(id=listing_id)
+    try:
+        item = models.Listing.objects.get(id=listing_id)
+    except models.Listing.DoesNotExist:
+        raise Http404("Listing does not exist")
+
     watches = models.Bid.objects.filter(listing=item)
     high_bid = watches.exclude(value=None).order_by("-value")[:1]
     my_bid = watches.exclude(value=None, user=request.user).order_by("-value")[:1]
@@ -36,7 +47,6 @@ def listing(request, listing_id):
                 "title": item.title,
                 "description": item.description,
                 "image_url": item.image_url,
-                "category": item.get_category_display(),
                 "post_time": item.post_time,
                 "expire_time": item.expire_time,
                 "starting_bid": item.starting_bid,
@@ -45,15 +55,22 @@ def listing(request, listing_id):
                 "status": item.get_status_display(),
                 "is_owner": request.user.id == item.user.id,
             },
+            "category": item.get_category_display(),
             "form": form,
             "image_placeholder_url": staticfiles_storage.url('auctions/image-placeholder.jpg')
         })
     elif request.method == "POST":
         form = forms.BiddingForm(request.POST)
         if form.is_valid():
-            if form.cleaned_data["value"] is None and len(my_watch) != 0:
-                my_watch[0].delete()
-            elif form.cleaned_data["value"] is None or len(high_bid) == 0 or form.cleaned_data["value"] > high_bid[0].value:
+            if form.cleaned_data["value"] is None:
+                if request.user == item.user:
+                    item.status = 1
+                    item.save()
+                elif len(my_watch) != 0:
+                    my_watch[0].delete()
+                else:
+                    form = form.save_user_listing(request.user, item)
+            elif len(high_bid) == 0 or form.cleaned_data["value"] > high_bid[0].value:
                 form = form.save_user_listing(request.user, item)
             return redirect("listing", listing_id=listing_id)
 
@@ -69,7 +86,7 @@ def new_listing(request):
         form = forms.ListingForm(request.POST)
         if form.is_valid():
             form = form.save_user(request.user)
-            return redirect("listing", id=form.id)
+            return redirect("listing", listing_id=form.id)
         else:
             return render(request, "auctions/new_listing.html", {
                 "form": form

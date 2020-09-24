@@ -4,12 +4,7 @@
 {% block body %}
 <div id="id_post_time" style="display:none">{{ listing.post_time|date:"c" }}</div>
 <div id="id_expire_time" style="display:none">{{ listing.expire_time|date:"c" }}</div>
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="#">All Categories</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ listing.category }}</li>
-  </ol>
-</nav>
+{% include "auctions/path_bar.html" %}
 <div class="card">
     <div class="row no-gutters">
         <div class="col-4">
@@ -36,24 +31,27 @@
                     <p class="card-text">Starting bid: ${{ listing.starting_bid }}</p>
                 {% endif %}
 
-                {% if listing.is_owner %}
-                    <button type="button" class="btn btn-outline-primary">Close Listing</button>
-                {% else %}
-                    <form class="form-inline" id="id_bid_watch_form" action="{% url 'listing' listing.id %}" method="post">
-                    <div class="form-group mb-2">
-                        {% csrf_token %}
-                        ${{ form.value }}
-                    <button type="button" class="btn btn-outline-primary mx-1" id="id_bid_button">Bid</button>
-                    </div>
-                    </form>
-                    <button type="button" class="btn btn-outline-primary mx-2" id="id_watch_button">
-                    {% if listing.watch.0.user == request.user %}
-                        Remove from Watchlist
+                <form class="form-inline" id="id_bid_watch_form" action="{% url 'listing' listing.id %}" method="post">
+                    {% csrf_token %}
+                    {% if listing.is_owner %}
+                    <input type="hidden" id="id_value">
+                        {% if listing.status == "Open" %}
+                            <button type="button" class="btn btn-outline-primary" onclick="return non_bid_button();">Close Listing</button>
+                        {% endif %}
                     {% else %}
-                        Add to Watchlist
+                        <div class="form-group mb-2">
+                            ${{ form.value }}
+                        <button type="button" class="btn btn-outline-primary mx-1" onclick="return bid_button();">Bid</button>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary mx-2" onclick="return non_bid_button();">
+                        {% if listing.watch.0.user == request.user %}
+                            Remove from Watchlist
+                        {% else %}
+                            Add to Watchlist
+                        {% endif %}
+                        </button>
                     {% endif %}
-                    </button>
-                {% endif %}
+                </form>
             </div>
         </div>
     </div>

@@ -1,12 +1,27 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>Active Listings</h2>
-    <ul>
+{% include "auctions/path_bar.html" %}
+<div class="row">
+<div class="col">
+    <h4>Active Listings</h4>
+    <ul class="list-group">
         {% for listing in listings %}
-            <li><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></li>
+            <li class="list-group-item"><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></li>
         {% empty %}
-            <li>No active listing.</li>
+            <li class="list-group-item">No active listing.</li>
         {% endfor %}
     </ul>
+</div>
+<div class="col-2">
+    <h4>Watchlist</h4>
+    <ul class="list-group">
+        {% for watch in watches %}
+            <li class="list-group-item"><a href="{% url 'listing' watch.listing.id %}">{{ watch.listing.title }}</a></li>
+        {% empty %}
+            <li class="list-group-item">No active listing.</li>
+        {% endfor %}
+    </ul>
+</div>
+</div>
 {% endblock %}

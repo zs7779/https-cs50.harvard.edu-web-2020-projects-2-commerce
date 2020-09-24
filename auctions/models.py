@@ -11,14 +11,12 @@ def set_default_datetime(days=30):
     return datetime.now(timezone.utc) + timedelta(days=days)
 
 
+class Category(models.Model):
+    category = models.fields.CharField(max_length=32, unique=True, blank=True)
+
+
 class Listing(models.Model):
-    CATEGORY_CHOICES = [
-        (0, ""),
-        (1, "Fashion"),
-        (2, "Toys"),
-        (3, "Electronics"),
-        (4, "Home")
-    ]
+    CATEGORY_CHOICES = [(cat["id"], cat["category"]) for cat in Category.objects.all().values()]
     STATUS_CHOICES = [
         (0, "Open"),
         (1, "Closed"),
