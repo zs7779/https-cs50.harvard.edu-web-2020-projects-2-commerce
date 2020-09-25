@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .listing_status import STATUS_CHOICES
+
 
 class User(AbstractUser):
     pass
@@ -17,12 +19,7 @@ class Category(models.Model):
 
 class Listing(models.Model):
     CATEGORY_CHOICES = [(cat["id"], cat["category"]) for cat in Category.objects.all().values()]
-    STATUS_CHOICES = [
-        (0, "Open"),
-        (1, "Closed"),
-        (2, "Expired"),
-        (3, "Sold")
-    ]
+    STATUS_CHOICES = STATUS_CHOICES
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="listings")
     title = models.fields.CharField(max_length=128)
     description = models.fields.TextField(blank=True)

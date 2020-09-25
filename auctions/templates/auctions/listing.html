@@ -2,58 +2,71 @@
 {% load static %}
 
 {% block body %}
-<div id="id_post_time" style="display:none">{{ listing.post_time|date:"c" }}</div>
-<div id="id_expire_time" style="display:none">{{ listing.expire_time|date:"c" }}</div>
 {% include "auctions/path_bar.html" %}
 <div class="card">
     <div class="row no-gutters">
-        <div class="col-4">
-          <img src="{{ listing.image_url }}" class="card-img" alt="Image not found" onerror="this.onerror=null; this.src='{{ image_placeholder_url }}';">
+        <div class="col-4 px-2 py-2">
+            <img src="{{ listing.image_url }}" class="card-img mx-2 my-2" alt="Image not found"
+                 onerror="this.onerror=null; this.src='{{ image_placeholder_url }}';">
+            <div class="card-body mx-2 my-2">
+                    <p class="card-text" >
+                        {% if listing.status == "Open" %}
+                            {% if listing.high_bid.0 %}
+                                Highest bid: ${{ listing.high_bid.0.value }} by {{ listing.high_bid.0.user }}
+                            {% else %}
+                                Starting bid: ${{ listing.starting_bid }}
+                            {% endif %}
+                        {% elif listing.status == "Sold" %}
+                            Sold: ${{ listing.high_bid.0.value }} by {{ listing.high_bid.0.user }}
+                        {% else %}
+                            The listing is closed.
+                        {% endif %}
+                    </p>
+
+                    <form class="form-inline" id="id_bid_watch_form" action="{% url 'listing' listing.id %}" method="post">
+                        {% csrf_token %}
+                        {% if listing.is_owner %}
+                            <input type="hidden" id="id_value">
+                            {% if listing.status == "Open" %}
+                                <button type="button" class="btn btn-outline-primary" onclick="return non_bid_button();">Close Listing</button>
+                            {% endif %}
+                        {% else %}
+                            {% if listing.status == "Open" %}
+                                <div class="form-group mb-2">
+                                    ${{ form.value }}
+                                <button type="button" class="btn btn-outline-primary mx-1" onclick="return bid_button();">Bid</button>
+                                </div>
+                            {% else %}
+                                <input type="hidden" id="id_value">
+                            {% endif %}
+                        {% endif %}
+                    </form>
+                    {% if not listing.is_owner %}
+                    <button type="button" class="btn btn-outline-primary mx-2" onclick="return non_bid_button();">
+                            {% if listing.watch.0.user == request.user %}
+                                Remove from Watchlist
+                            {% else %}
+                                Add to Watchlist
+                            {% endif %}
+                    </button>
+                    {% endif %}
+            </div>
         </div>
-        <div class="col-4">
-            <div class="card-body">
+
+        <div class="col-8 px-2 py-2">
+            <div class="card-body mx-2 my-2">
                 <h5 class="card-title">{{ listing.title }}</h5>
                 <small class="card-subtitle mb-2 text-muted">
                     <span>posted by <a href="#">{{ listing.user }}</a></span>
-                    <span id="id_post_time_diff"></span>
-                    <span class="badge badge-secondary">{{ listing.status }}</span>
+                    <span class="class_post_time">{{ listing.post_time|date:"c" }}</span>
+                    <span class="badge {{ listing.status_color }}">{{ listing.status }}</span>
                 </small>
                 <p class="card-text">
                     {{ listing.description }}
                 </p>
             </div>
         </div>
-        <div class="col-4">
-            <div class="card-body">
-                {% if listing.high_bid.0 %}
-                    <p class="card-text">Highest bid: ${{ listing.high_bid.0.value }} by {{ listing.high_bid.0.user }}</p>
-                {% else %}
-                    <p class="card-text">Starting bid: ${{ listing.starting_bid }}</p>
-                {% endif %}
 
-                <form class="form-inline" id="id_bid_watch_form" action="{% url 'listing' listing.id %}" method="post">
-                    {% csrf_token %}
-                    {% if listing.is_owner %}
-                    <input type="hidden" id="id_value">
-                        {% if listing.status == "Open" %}
-                            <button type="button" class="btn btn-outline-primary" onclick="return non_bid_button();">Close Listing</button>
-                        {% endif %}
-                    {% else %}
-                        <div class="form-group mb-2">
-                            ${{ form.value }}
-                        <button type="button" class="btn btn-outline-primary mx-1" onclick="return bid_button();">Bid</button>
-                        </div>
-                        <button type="button" class="btn btn-outline-primary mx-2" onclick="return non_bid_button();">
-                        {% if listing.watch.0.user == request.user %}
-                            Remove from Watchlist
-                        {% else %}
-                            Add to Watchlist
-                        {% endif %}
-                        </button>
-                    {% endif %}
-                </form>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}

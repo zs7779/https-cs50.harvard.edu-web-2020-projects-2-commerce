@@ -33,5 +33,5 @@ class BiddingForm(forms.ModelForm):
         model = models.Bid
         fields = ["value"]
         widgets = {
-            "value": forms.NumberInput(attrs={"class": "form-control", "step": 1.00})
+            "value": forms.NumberInput(attrs={"class": "form-control", "step": 1.00, "width": "10px"})
         }

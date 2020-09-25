@@ -8,19 +8,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles.storage import staticfiles_storage
 
 from . import models, forms
+from .listing_status import STATUS_COLORS
 
 
 @login_required
 def index(request, category=""):
-    category = request.GET["category"] if "category" in request.GET else ""
-    items = models.Listing.objects.all()
-    if category != 0:
-        items = items.filter()
+    category_code = 0
+    try:
+        if category != "":
+            category_code = models.Category.objects.get(category=category).id
+    except models.Category.DoesNotExist:
+        return redirect("index")
+
+    items = models.Listing.objects.filter(status=0)
+    if category_code != 0:
+        items = items.filter(category=category_code)
+    items = [{
+        "id": item.id,
+        "user": item.user,
+        "title": item.title,
+        "description": item.description,
+        "image_url": item.image_url,
+        "post_time": item.post_time,
+        "status": item.get_status_display(),
+        "status_color": STATUS_COLORS[item.status],
+        "starting_bid": item.starting_bid,
+        "bids": item.bids.order_by("-value")[:1]
+    } for item in items]
     watches = models.Bid.objects.filter(value=None, user=request.user)
     return render(request, "auctions/index.html", {
         "category": category,
         "listings": items,
-        "watches": watches
+        "watches": watches,
+        "image_placeholder_url": staticfiles_storage.url('auctions/image-placeholder.jpg'),
+        "categories": models.Category.objects.all()
     })
 
 
@@ -53,6 +74,7 @@ def listing(request, listing_id):
                 "high_bid": high_bid,
                 "watch": my_watch,
                 "status": item.get_status_display(),
+                "status_color": STATUS_COLORS[item.status],
                 "is_owner": request.user.id == item.user.id,
             },
             "category": item.get_category_display(),
@@ -63,16 +85,20 @@ def listing(request, listing_id):
         form = forms.BiddingForm(request.POST)
         if form.is_valid():
             if form.cleaned_data["value"] is None:
-                if request.user == item.user:
-                    item.status = 1
+                if item.status == 0 and request.user == item.user:
+                    high_bid = watches.exclude(value=None).order_by("-value")[:1]
+                    if len(high_bid) > 0:
+                        item.status = 3
+                    else:
+                        item.status = 1
                     item.save()
                 elif len(my_watch) != 0:
                     my_watch[0].delete()
                 else:
                     form = form.save_user_listing(request.user, item)
-            elif len(high_bid) == 0 or form.cleaned_data["value"] > high_bid[0].value:
+            elif item.status == 0 and len(high_bid) == 0 or form.cleaned_data["value"] > high_bid[0].value:
                 form = form.save_user_listing(request.user, item)
-            return redirect("listing", listing_id=listing_id)
+        return redirect("listing", listing_id=listing_id)
 
 
 @login_required

@@ -1,13 +1,59 @@
 {% extends "auctions/layout.html" %}
+{% load static %}
 
 {% block body %}
 {% include "auctions/path_bar.html" %}
 <div class="row">
-<div class="col">
-    <h4>Active Listings</h4>
+<div class="col-2">
+    <h4>Categories</h4>
     <ul class="list-group">
+        {% for category in categories %}
+            {% if category.id == 1 %}
+                <li class="list-group-item"><a href="{% url 'category' %}">All</a></li>
+            {% else %}
+                <li class="list-group-item"><a href="{% url 'category' category.category %}">{{ category.category }}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+<div class="col-8">
+    <h4>Active Listings</h4>
+    <ul class="list-group-flush">
         {% for listing in listings %}
-            <li class="list-group-item"><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></li>
+            <li class="list-group-item">
+                <div class="card">
+                    <div class="row no-gutters">
+                        <div class="col-2 d-flex align-items-center">
+                            <img src="{{ listing.image_url }}" class="card-img center mx-2 my-2"
+                               alt="Image not found" onerror="this.onerror=null; this.src='{{ image_placeholder_url }}';">
+                        </div>
+                        <div class="col-8">
+                            <div class="card-body mx-2 my-2">
+                                <h5 class="card-title"><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></h5>
+                                <small class="card-subtitle mb-2 text-muted">
+                                    <span>posted by <a href="#">{{ listing.user }}</a></span>
+                                    <span class="class_post_time">{{ listing.post_time|date:"c" }}</span>
+                                    <span class="badge {{ listing.status_color }}">{{ listing.status }}</span>
+                                </small>
+                                <p class="card-text">
+                                    {{ listing.description|truncatechars:200 }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <div class="card-body mx-2 my-2">
+                                <p class="card-text">
+                                {% if listing.high_bid.0 %}
+                                    ${{ listing.high_bid.0.value }}
+                                {% else %}
+                                    ${{ listing.starting_bid }}
+                                {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
         {% empty %}
             <li class="list-group-item">No active listing.</li>
         {% endfor %}
@@ -19,9 +65,13 @@
         {% for watch in watches %}
             <li class="list-group-item"><a href="{% url 'listing' watch.listing.id %}">{{ watch.listing.title }}</a></li>
         {% empty %}
-            <li class="list-group-item">No active listing.</li>
+            <li class="list-group-item">Empty</li>
         {% endfor %}
     </ul>
 </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{% static 'auctions/auctions.js' %}"></script>
 {% endblock %}
