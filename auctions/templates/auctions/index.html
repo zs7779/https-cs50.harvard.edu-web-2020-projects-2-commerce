@@ -60,14 +60,19 @@
     </ul>
 </div>
 <div class="col-2">
-    <h4>Watchlist</h4>
-    <ul class="list-group">
-        {% for watch in watches %}
-            <li class="list-group-item"><a href="{% url 'listing' watch.listing.id %}">{{ watch.listing.title }}</a></li>
-        {% empty %}
-            <li class="list-group-item">Empty</li>
-        {% endfor %}
-    </ul>
+     <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#id_watchlist" aria-expanded="false" aria-controls="id_watchlist">
+        Watchlist
+      </button>
+    <div class="collapse" id="id_watchlist">
+        <ul class="list-group">
+            {% for watch in watches %}
+                <li class="list-group-item"><a href="{% url 'listing' watch.listing.id %}">{{ watch.listing.title }}</a></li>
+            {% empty %}
+                <li class="list-group-item">Empty</li>
+            {% endfor %}
+        </ul>
+    </div>
+
 </div>
 </div>
 {% endblock %}
